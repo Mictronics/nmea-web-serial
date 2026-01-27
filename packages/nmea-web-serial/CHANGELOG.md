@@ -1,6 +1,26 @@
 # Changelog
 
 
+## v1.1.4
+
+[compare changes](https://github.com/antarctica/nmea-web-serial/compare/v1.1.2...v1.1.4)
+
+### 💅 Refactors
+
+- Restructure project into monorepo more compatible with turbo ([62ad001](https://github.com/antarctica/nmea-web-serial/commit/62ad001))
+
+### 📖 Documentation
+
+- Update readme to fix broken links and adjust order ([aba7e6e](https://github.com/antarctica/nmea-web-serial/commit/aba7e6e))
+
+### 🤖 CI
+
+- Add GitHub Actions workflow for CI with Node.js setup, testing, and linting ([2134272](https://github.com/antarctica/nmea-web-serial/commit/2134272))
+
+### ❤️ Contributors
+
+- Jonny Dawe <jonwe@bas.ac.uk>
+
 ## v1.1.3
 
 [compare changes](https://github.com/antarctica/nmea-web-serial/compare/v1.1.2...v1.1.3)
