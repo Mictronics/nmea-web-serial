@@ -8,8 +8,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "prepare": "husky install",
-    "docs": "turbo run docs"
+    "prepare": "husky install"
   },
   "workspaces": [
     "packages/*",
