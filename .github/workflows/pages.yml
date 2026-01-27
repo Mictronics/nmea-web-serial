@@ -35,6 +35,7 @@ jobs:
         run: npm run build
 
       - name: Build TypeDoc documentation
+        working-directory: ./packages/nmea-web-serial
         run: npm run docs
 
       - name: Build xstate-react example
@@ -59,7 +60,7 @@ jobs:
         run: |
           mkdir -p gh-pages
           # Copy TypeDoc documentation to root
-          cp -r docs/* gh-pages/
+          cp -r packages/nmea-web-serial/docs/* gh-pages/
           # Copy examples to subdirectories
           mkdir -p gh-pages/examples/xstate-react
           cp -r examples/xstate-react/dist/* gh-pages/examples/xstate-react/
