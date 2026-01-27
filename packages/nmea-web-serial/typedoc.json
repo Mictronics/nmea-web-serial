@@ -1,8 +1,8 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "NMEA Web Serial",
-  "readme": "README.md",
-  "entryPoints": ["./src"],
+  "readme": "../../README.md",
+  "entryPoints": ["src"],
   "sort": ["source-order"],
   "searchInComments": true,
   "searchInDocuments": true,
