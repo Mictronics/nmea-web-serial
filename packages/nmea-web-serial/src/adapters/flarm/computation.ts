@@ -127,6 +127,8 @@ function computeDevice(dev?: FLACPacket): FlarmData['device'] {
       deviceId: dev.deviceId,
       deviceType: dev.deviceType,
       region: dev.region,
+      radioId: dev.radioId,
+      radioIdType: dev.radioIdType,
       source: 'FLAC',
     };
   }

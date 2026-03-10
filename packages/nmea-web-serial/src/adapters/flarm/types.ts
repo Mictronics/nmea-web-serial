@@ -94,6 +94,8 @@ export interface FlarmData {
     build: string;
     serial: string;
     region: string;
+    radioId: string;
+    radioIdType: 'Unknown' | 'FLARM' | 'ADSB';
     source: 'FLAC' | null;
   } | null;
 }
