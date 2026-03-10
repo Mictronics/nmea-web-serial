@@ -7,6 +7,13 @@
  * @document documents/examples.md
  */
 
+// FLARM adapter (convenience for FLARM use cases)
+export {
+  createFlarmNmeaMachine,
+  type FlarmData,
+  FlarmNmeaClient,
+} from './adapters/flarm'
+
 // Navigation adapter (convenience for navigation-focused use cases)
 export {
   createNavigationNmeaMachine,
