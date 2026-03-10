@@ -1,4 +1,4 @@
-# NMEA 0183 sentence parser for the Web Serial API
+# NMEA 0183 and FLARM sentence parser for the Web Serial API
 
 [![npm version](https://img.shields.io/npm/v/nmea-web-serial.svg)](https://www.npmjs.com/package/nmea-web-serial)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -6,9 +6,13 @@
 
 This library provides a state machine-based solution for parsing NMEA 0183 sentences from serial ports using the Web Serial API. It builds on top of [nmea-simple](https://www.npmjs.com/package/nmea-simple) and extends it with custom depth sentence codecs (DPT, DBS, DBK) and a navigation data adapter that computes position, time, speed, heading, and depth from multiple NMEA sentences.
 
+A FLARM adapter computes various FLARM related data from a connected device, for example a PowerFLARM.
+
 The library uses [XState](https://xstate.js.org/) to orchestrate and manage the serial port connection state.
 
 The official NMEA 0183 standard can be found [here](https://www.nmea.org/nmea-0183.html) and is described in clear terms [here](https://gpsd.gitlab.io/gpsd/NMEA.html).
+
+FLARM data port specification (ICD) and configuration specification can be found on [FLARM Support](https://www.flarm.com/de/support/downloads/).
 
 ## Browser Support
 
@@ -147,6 +151,19 @@ const client = new NmeaClient(machine, {
 - `client.setBaudRate(baudRate)` - Set the baud rate (requires reconnection to take effect)
 - `client.machine` - Access the underlying XState actor (for advanced use)
 - `client.dispose()` - Clean up resources and stop the machine
+- `client.send(...)` - Send NMEA packets to the machine
+
+### Send NMEA sentence
+
+NMEA sentences can be send to a device by the `SERIAL.WRITE` event that accepts a NMEA sentence string. Supported NMEA packets are depending on the implemented packet encoders.
+
+```typescript
+// Request the capabilities from a PowerFLARM device via FLAC packet.
+client.machine.send({
+  type: 'SERIAL.WRITE',
+  sentence: encodeExtendedNmeaPacket({ queryType: 'R', configItem: 'CAP', sentenceId: 'FLAC' }, 'P'),
+});
+```
 
 ## Machine API
 
@@ -218,6 +235,14 @@ The navigation adapter automatically computes navigation data from multiple NMEA
 - **Heading**: HDT → HDG → COG (from RMC/VTG)
 - **Depth**: DPT → DBT → DBS → DBK
 
+## FLARM Adapter
+
+The FLARM adapter automatically computes FLARM data from NMEA sentences:
+
+- **Device**: FLAC
+- **Status**: FLAU
+- **Altitude**: GRMZ
+
 ## Custom Machines
 
 You can create custom machines with your own adapter functions:
@@ -269,6 +294,12 @@ The navigation adapter uses the following sentence types to compute navigation d
 - `DBS` - Depth Below Surface
 - `DBK` - Depth Below Keel
 - `ZDA` - Time & Date
+
+The FLARM adapter uses the following sentence types to compute FLARM data:
+
+- `FLAC` - Device configuration (on request via FLAC query)
+- `FLAU` - Heartbeat, status, and basic alarms
+- `GRMZ` - Garmin's barometric altitude
 
 ## TypeScript
 
