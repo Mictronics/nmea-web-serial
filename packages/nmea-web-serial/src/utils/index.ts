@@ -10,7 +10,7 @@ export function toHexString(v: number): string {
   const msn = (v >> 4) & 0x0F
   const lsn = (v >> 0) & 0x0F
 
-  return m_hex[msn] + m_hex[lsn]
+  return m_hex[msn]! + m_hex[lsn]!
 }
 
 export function padLeft(value: string | number, length: number, paddingCharacter: string): string {
@@ -33,9 +33,11 @@ export function padLeft(value: string | number, length: number, paddingCharacter
 export function validNmeaChecksum(nmeaSentence: string): boolean {
   const [sentenceWithoutChecksum, checksumString] = nmeaSentence.split('*')
 
-  const correctChecksum = computeNmeaChecksum(sentenceWithoutChecksum)
+  if (!sentenceWithoutChecksum || !checksumString) {
+    return false
+  }
 
-  // checksum is a 2 digit hex value
+  const correctChecksum = computeNmeaChecksum(sentenceWithoutChecksum)
   const actualChecksum = Number.parseInt(checksumString, 16)
 
   return correctChecksum === actualChecksum
@@ -111,7 +113,7 @@ export function encodeLatitude(latitude?: number): string {
   // get fractional degrees
   const f = latitude - d
   // convert to fractional minutes
-  const m = (f * 60.0)
+  const m = f * 60.0
   // format the fixed point fractional minutes "mm.mmmmmm"
   const t = padLeft(m.toFixed(6), 9, '0')
 
@@ -145,7 +147,7 @@ export function encodeLongitude(longitude?: number): string {
   // get fractional degrees
   const f = longitude - d
   // convert to fractional minutes and round up to the specified precision
-  const m = (f * 60.0)
+  const m = f * 60.0
   // format the fixed point fractional minutes "mm.mmmmmm"
   const t = padLeft(m.toFixed(6), 9, '0')
 
@@ -237,8 +239,8 @@ export function encodeValue(value?: unknown): string {
 /**
  * Parse the given string to a float, returning 0 for an empty string.
  */
-export function parseFloatSafe(str: string): number {
-  if (str === '') {
+export function parseFloatSafe(str?: string): number {
+  if (!str || str === '') {
     return 0.0
   }
   return Number.parseFloat(str)
@@ -247,8 +249,8 @@ export function parseFloatSafe(str: string): number {
 /**
  * Parse the given string to a integer, returning 0 for an empty string.
  */
-export function parseIntSafe(i: string): number {
-  if (i === '') {
+export function parseIntSafe(i?: string): number {
+  if (!i || i === '') {
     return 0
   }
 
@@ -291,7 +293,7 @@ export function parseDmCoordinate(coordinate: string): number {
     minutes = coordinate
   }
 
-  return (Number.parseFloat(degrees) + (Number.parseFloat(minutes) / 60.0))
+  return Number.parseFloat(degrees) + Number.parseFloat(minutes) / 60.0
 }
 
 /**
@@ -300,7 +302,7 @@ export function parseDmCoordinate(coordinate: string): number {
  * where north is positive and south is negative.
  */
 export function parseLatitude(lat: string, hemi: string): number {
-  const hemisphere = (hemi === 'N') ? 1.0 : -1.0
+  const hemisphere = hemi === 'N' ? 1.0 : -1.0
 
   return parseDmCoordinate(lat) * hemisphere
 }
@@ -311,7 +313,7 @@ export function parseLatitude(lat: string, hemi: string): number {
  * degrees, where east is positive and west is negative.
  */
 export function parseLongitude(lon: string, hemi: string): number {
-  const hemisphere = (hemi === 'E') ? 1.0 : -1.0
+  const hemisphere = hemi === 'E' ? 1.0 : -1.0
 
   return parseDmCoordinate(lon) * hemisphere
 }
