@@ -54,3 +54,4 @@ export type NmeaEvent
     | { type: 'STOP' }
     | { type: 'SET_LOGGING', enabled: boolean }
     | { type: 'SET_BAUD_RATE', baudRate: number }
+    | { type: 'SERIAL.WRITE', sentence: string }

@@ -13,10 +13,7 @@ import { parseUnsafeNmeaSentence } from '../parser'
  * @param allowedIds - Array of allowed sentence IDs.
  * @returns True if the sentence ID is allowed, false otherwise.
  */
-function isAllowedSentenceId(
-  sentenceId: string | undefined,
-  allowedIds: readonly string[] | undefined,
-): boolean {
+function isAllowedSentenceId(sentenceId: string | undefined, allowedIds: readonly string[] | undefined): boolean {
   if (!allowedIds || allowedIds.length === 0) {
     return true // If no filter specified, allow all
   }
@@ -152,104 +149,167 @@ const closePortLogic = fromPromise<void, { port: SerialPort | null }>(async ({ i
  * @param input - Object containing the serial port to read from.
  * @param input.port - The SerialPort instance to read from.
  */
-const readNmeaStreamLogic = fromCallback<NmeaEvent, { port: SerialPort }>(
-  ({ input, sendBack, receive }) => {
-    const { port } = input
-    if (!port || !port.readable) {
-      sendBack({ type: 'SERIAL.ERROR', error: 'Invalid port context.' })
-      return
-    }
+const readNmeaStreamLogic = fromCallback<NmeaEvent, { port: SerialPort }>(({ input, sendBack, receive }) => {
+  const { port } = input
+  if (!port || !port.readable) {
+    sendBack({ type: 'SERIAL.ERROR', error: 'Invalid port context.' })
+    return
+  }
 
-    // Set up the stream transformation pipeline
-    const transformer = new LineBreakTransformer()
-    // TextDecoderStream is available in modern browsers (Chrome 71+, Edge 79+, Firefox 105+, Safari 14.1+)
-    // Type assertion needed due to TypeScript's strict typing of BufferSource vs Uint8Array
-    const lineStream = port.readable
-      .pipeThrough(new TextDecoderStream() as TransformStream<Uint8Array, string>) // Bytes to text
-      .pipeThrough(
-        new TransformStream<string, string>({
-          transform: transformer.transform.bind(transformer),
-          flush: transformer.flush.bind(transformer),
-        }),
-      ) // Text to lines
+  // Set up the stream transformation pipeline
+  const transformer = new LineBreakTransformer()
+  // TextDecoderStream is available in modern browsers (Chrome 71+, Edge 79+, Firefox 105+, Safari 14.1+)
+  // Type assertion needed due to TypeScript's strict typing of BufferSource vs Uint8Array
+  const lineStream = port.readable
+    .pipeThrough(new TextDecoderStream() as TransformStream<Uint8Array, string>) // Bytes to text
+    .pipeThrough(
+      new TransformStream<string, string>({
+        transform: transformer.transform.bind(transformer),
+        flush: transformer.flush.bind(transformer),
+      }),
+    ) // Text to lines
 
-    const reader = lineStream.getReader()
-    let keepReading = true
+  const reader = lineStream.getReader()
+  let keepReading = true
 
-    // --- Read Loop ---
-    async function readLoop() {
-      try {
-        // eslint-disable-next-line no-unmodified-loop-condition
-        while (keepReading) {
-          // Read from the *transformed* stream (which gives us lines)
-          const { value: line, done } = await reader.read()
+  // --- Read Loop ---
+  async function readLoop() {
+    try {
+      // eslint-disable-next-line no-unmodified-loop-condition
+      while (keepReading) {
+        // Read from the *transformed* stream (which gives us lines)
+        const { value: line, done } = await reader.read()
 
-          if (done) {
-            break
-          }
+        if (done) {
+          break
+        }
 
-          if (line && line.length > 0) {
-            try {
-              // Parse the NMEA sentence using the unsafe parser which returns
-              // UnknownPacket for unknown sentences instead of throwing
-              const packet = parseUnsafeNmeaSentence(line)
-              // Skip unknown packets silently - we don't care about them
-              // UnknownPacket has sentenceId "?", all other packets have specific IDs
-              if (packet.sentenceId === '?') {
-                continue
-              }
-              // Send the parsed packet to the parent machine
-              sendBack({ type: 'SERIAL.DATA', data: packet })
-            } catch (error) {
-              // This should rarely happen with the unsafe parser, but handle
-              // any unexpected errors (e.g., malformed sentence structure)
-              const errorMessage = error instanceof Error ? error.message : String(error)
-              console.warn('Failed to parse NMEA sentence:', line, errorMessage)
-              sendBack({
-                type: 'SERIAL.ERROR',
-                error: `Parser Error: ${errorMessage}`,
-              })
+        if (line && line.length > 0) {
+          try {
+            // Parse the NMEA sentence using the unsafe parser which returns
+            // UnknownPacket for unknown sentences instead of throwing
+            const packet = parseUnsafeNmeaSentence(line)
+            // Skip unknown packets silently - we don't care about them
+            // UnknownPacket has sentenceId "?", all other packets have specific IDs
+            if (packet.sentenceId === '?') {
+              continue
             }
+            // Send the parsed packet to the parent machine
+            sendBack({ type: 'SERIAL.DATA', data: packet })
+          } catch (error) {
+            // This should rarely happen with the unsafe parser, but handle
+            // any unexpected errors (e.g., malformed sentence structure)
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            console.warn('Failed to parse NMEA sentence:', line, errorMessage)
+            sendBack({
+              type: 'SERIAL.ERROR',
+              error: `Parser Error: ${errorMessage}`,
+            })
           }
         }
-      } catch (error) {
-        // This catches a *fatal* stream error (e.g., port unplugged)
-        console.error('Read loop error:', error)
-        if (keepReading) {
-          // Report the error only if it was unexpected
-          const errorMessage = error instanceof Error ? error.message : String(error)
-          sendBack({ type: 'FATAL_ERROR', error: errorMessage })
-        }
-      } finally {
-        console.log('Read loop finished.')
-        // Signal that the stream has ended (gracefully or not)
-        sendBack({ type: 'SERIAL.DISCONNECTED' })
       }
+    } catch (error) {
+      // This catches a *fatal* stream error (e.g., port unplugged)
+      console.error('Read loop error:', error)
+      if (keepReading) {
+        // Report the error only if it was unexpected
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        sendBack({ type: 'FATAL_ERROR', error: errorMessage })
+      }
+    } finally {
+      console.log('Read loop finished.')
+      // Signal that the stream has ended (gracefully or not)
+      sendBack({ type: 'SERIAL.DISCONNECTED' })
     }
+  }
 
-    readLoop() // Start the loop
+  readLoop() // Start the loop
 
-    // --- Handle Stop Commands ---
-    receive((event: NmeaEvent) => {
-      if (event.type === 'STOP') {
-        console.log('Received STOP, cancelling reader...')
-        keepReading = false
-        reader.cancel().catch(() => {})
-      }
-    })
-
-    // --- Cleanup ---
-    return () => {
-      console.log('Cleaning up stream reader actor...')
+  // --- Handle Stop Commands ---
+  receive((event: NmeaEvent) => {
+    if (event.type === 'STOP') {
+      console.log('Received STOP, cancelling reader...')
       keepReading = false
-      if (reader) {
-        reader.cancel().catch(() => {})
-      }
-      // Note: We don't close the port here - let the DISCONNECT action handle it
-      // Closing here can cause issues if the port is needed for reconnection
+      reader.cancel().catch(() => {})
     }
-  },
-)
+  })
+
+  // --- Cleanup ---
+  return () => {
+    console.log('Cleaning up stream reader actor...')
+    keepReading = false
+    if (reader) {
+      reader.cancel().catch(() => {})
+    }
+    // Note: We don't close the port here - let the DISCONNECT action handle it
+    // Closing here can cause issues if the port is needed for reconnection
+  }
+})
+
+/**
+ * Actor: writeNmeaStream (Invoked Callback)
+ * Handles writing NMEA sentences to the serial port.
+ *
+ * Listens for SERIAL.WRITE events and writes the provided NMEA sentence to the port.
+ * Each sentence is written with proper NMEA formatting (CRLF termination).
+ *
+ * Can be stopped by sending a STOP event, which cancels any pending writes.
+ *
+ * @param input - Object containing the serial port to write to.
+ * @param input.port - The SerialPort instance to write to.
+ */
+const writeNmeaStreamLogic = fromCallback<NmeaEvent, { port: SerialPort }>(({ input, sendBack, receive }) => {
+  const { port } = input
+  if (!port || !port.writable) {
+    sendBack({ type: 'SERIAL.ERROR', error: 'Invalid port context for writing.' })
+    return
+  }
+
+  let keepWriting = true
+  const encoder = new TextEncoder()
+  const writer = port.writable.getWriter()
+
+  // --- Handle Write Commands ---
+  receive(async (event: NmeaEvent) => {
+    if (event.type === 'SERIAL.WRITE' && keepWriting) {
+      try {
+        // NMEA sentences should end with CRLF (\r\n)
+        const sentenceWithTerminator = event.sentence.endsWith('\r\n') ? event.sentence : `${event.sentence}\r\n`
+
+        const data = encoder.encode(sentenceWithTerminator)
+        await writer.write(data)
+
+        console.log('NMEA sentence written:', event.sentence)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        console.error('Failed to write NMEA sentence:', event.sentence, errorMessage)
+        sendBack({
+          type: 'SERIAL.ERROR',
+          error: `Write Error: ${errorMessage}`,
+        })
+      }
+    } else if (event.type === 'STOP') {
+      console.log('Received STOP, cancelling writer...')
+      keepWriting = false
+      try {
+        await writer.close()
+      } catch (error) {
+        console.warn('Error closing writer:', error)
+      }
+    }
+  })
+
+  // --- Cleanup ---
+  return async () => {
+    console.log('Cleaning up stream writer actor...')
+    keepWriting = false
+    try {
+      await writer.close()
+    } catch (error) {
+      console.warn('Error closing writer during cleanup:', error)
+    }
+  }
+})
 
 /**
  * Factory function to create an NMEA state machine with a generic adapter pattern.
@@ -294,6 +354,7 @@ export function createNmeaMachine<TData, TPackets extends Record<string, PacketS
     actors: {
       connectToSerial: connectToSerialLogic,
       readNmeaStream: readNmeaStreamLogic,
+      writeNmeaStream: writeNmeaStreamLogic,
       closePort: closePortLogic,
     },
     actions: {
@@ -477,15 +538,25 @@ export function createNmeaMachine<TData, TPackets extends Record<string, PacketS
           'SERIAL.DISCONNECTED': {
             target: 'disconnecting',
           },
+          'SERIAL.WRITE': {
+            actions: sendTo('streamWriter', ({ event }) => ({ type: 'SERIAL.WRITE', sentence: event.sentence })),
+          },
           'DISCONNECT': {
-            actions: sendTo('streamReader', { type: 'STOP' }),
+            actions: [sendTo('streamReader', { type: 'STOP' }), sendTo('streamWriter', { type: 'STOP' })],
           },
         },
-        invoke: {
-          id: 'streamReader',
-          src: 'readNmeaStream',
-          input: ({ context }) => ({ port: context.port! }),
-        },
+        invoke: [
+          {
+            id: 'streamReader',
+            src: 'readNmeaStream',
+            input: ({ context }) => ({ port: context.port! }),
+          },
+          {
+            id: 'streamWriter',
+            src: 'writeNmeaStream',
+            input: ({ context }) => ({ port: context.port! }),
+          },
+        ],
       },
       disconnecting: {
         invoke: {
