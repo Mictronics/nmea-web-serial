@@ -1,6 +1,6 @@
-import type { GGAPacket, GSAPacket, RMCPacket } from 'nmea-simple'
-import type { FLACPacket, FLAUPacket, GRMZPacket } from '../../parser/codecs'
-import type { FlarmData, StoredPackets } from './types'
+import type { GGAPacket, GSAPacket, RMCPacket } from 'nmea-simple';
+import type { FLACPacket, FLAUPacket, GRMZPacket } from '../../parser/codecs';
+import type { FlarmData, StoredPackets } from './types';
 
 function computePosition(gga?: GGAPacket, rmc?: RMCPacket): FlarmData['position'] {
   if (gga && gga.fixType !== 'none') {
@@ -12,7 +12,7 @@ function computePosition(gga?: GGAPacket, rmc?: RMCPacket): FlarmData['position'
       altitudeMeters: gga.altitudeMeters,
       satellitesInView: gga.satellitesInView,
       horizontalDilution: gga.horizontalDilution,
-    }
+    };
   }
 
   if (rmc && rmc.status === 'valid') {
@@ -21,9 +21,9 @@ function computePosition(gga?: GGAPacket, rmc?: RMCPacket): FlarmData['position'
       longitude: rmc.longitude,
       source: 'RMC',
       status: rmc.status,
-    }
+    };
   }
-  return null
+  return null;
 }
 
 function computeTime(gga?: GGAPacket, rmc?: RMCPacket): FlarmData['time'] {
@@ -32,7 +32,7 @@ function computeTime(gga?: GGAPacket, rmc?: RMCPacket): FlarmData['time'] {
       utc: gga.time,
       local: null,
       source: 'GGA',
-    }
+    };
   }
 
   if (rmc && rmc.status === 'valid') {
@@ -40,25 +40,25 @@ function computeTime(gga?: GGAPacket, rmc?: RMCPacket): FlarmData['time'] {
       utc: rmc.datetime,
       local: null,
       source: 'RMC',
-    }
+    };
   }
-  return null
+  return null;
 }
 
 function computeSpeed(rmc?: RMCPacket): FlarmData['speed'] {
   if (rmc && rmc.status === 'valid') {
-    return { knots: rmc.speedKnots, source: 'RMC' }
+    return { knots: rmc.speedKnots, source: 'RMC' };
   }
-  return null
+  return null;
 }
 
 function computeHeading(rmc?: RMCPacket): FlarmData['heading'] {
   // Fallback to COG (Course Over Ground) from RMC
-  const cog = rmc?.trackTrue ?? 0
+  const cog = rmc?.trackTrue ?? 0;
   if (cog !== undefined) {
-    return { degreesTrue: cog, source: 'COG', isDerived: true }
+    return { degreesTrue: cog, source: 'COG', isDerived: true };
   }
-  return null
+  return null;
 }
 
 function computeDilution(gsa?: GSAPacket): FlarmData['dilution'] {
@@ -71,9 +71,9 @@ function computeDilution(gsa?: GSAPacket): FlarmData['dilution'] {
       hdop: gsa.HDOP,
       vdop: gsa.VDOP,
       source: 'GSA',
-    }
+    };
   }
-  return null
+  return null;
 }
 
 function computeStatus(status?: FLAUPacket): FlarmData['status'] {
@@ -84,9 +84,9 @@ function computeStatus(status?: FLAUPacket): FlarmData['status'] {
       gps: status.gpsStatus,
       power: status.powerStatus,
       source: 'FLAU',
-    }
+    };
   }
-  return null
+  return null;
 }
 
 function computeAlarm(alarm?: FLAUPacket): FlarmData['alarm'] {
@@ -98,9 +98,9 @@ function computeAlarm(alarm?: FLAUPacket): FlarmData['alarm'] {
       relativeDistance: alarm.relativeDistance,
       relativeVertical: alarm.relativeVertical,
       source: 'FLAU',
-    }
+    };
   }
-  return null
+  return null;
 }
 
 function computeAltitude(alt?: GRMZPacket): FlarmData['altitude'] {
@@ -110,31 +110,39 @@ function computeAltitude(alt?: GRMZPacket): FlarmData['altitude'] {
       unit: alt.unit,
       fixMode: alt.fixMode,
       source: 'GRMZ',
-    }
+    };
   }
-  return null
+  return null;
 }
 
 function computeDevice(dev?: FLACPacket): FlarmData['device'] {
   if (dev) {
     return {
-      features: dev?.features,
+      features: dev.features,
+      hwVersion: dev.hwVersion,
+      swVersion: dev.swVersion,
+      serial: dev.serial,
+      build: dev.build,
+      flarmVersion: dev.flarmVersion,
+      deviceId: dev.deviceId,
+      deviceType: dev.deviceType,
+      region: dev.region,
       source: 'FLAC',
-    }
+    };
   }
-  return null
+  return null;
 }
 
 export function computeFlarmData(packets: StoredPackets): FlarmData {
-  const time = computeTime(packets.GGA, packets.RMC)
-  const position = computePosition(packets.GGA, packets.RMC)
-  const speed = computeSpeed(packets.RMC)
-  const heading = computeHeading(packets.RMC)
-  const dilution = computeDilution(packets.GSA)
-  const status = computeStatus(packets.FLAU)
-  const alarm = computeAlarm(packets.FLAU)
-  const altitude = computeAltitude(packets.GRMZ)
-  const device = computeDevice(packets.FLAC)
+  const time = computeTime(packets.GGA, packets.RMC);
+  const position = computePosition(packets.GGA, packets.RMC);
+  const speed = computeSpeed(packets.RMC);
+  const heading = computeHeading(packets.RMC);
+  const dilution = computeDilution(packets.GSA);
+  const status = computeStatus(packets.FLAU);
+  const alarm = computeAlarm(packets.FLAU);
+  const altitude = computeAltitude(packets.GRMZ);
+  const device = computeDevice(packets.FLAC);
 
-  return { time, position, speed, heading, status, alarm, dilution, altitude, device }
+  return { time, position, speed, heading, status, alarm, dilution, altitude, device };
 }

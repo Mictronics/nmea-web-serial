@@ -46,29 +46,29 @@
  * SSR/ADS-B Module                     XPDR
  */
 
-import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub'
-import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub'
-import { createNmeaChecksumFooter } from '../../utils'
+import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
+import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub';
+import { createNmeaChecksumFooter } from '../../utils';
 
-export const sentenceId = 'FLAC' as const
-export const sentenceName = 'Device features' as const
+export const sentenceId = 'FLAC' as const;
+export const sentenceName = 'Device features' as const;
 
-export type FLACCapValue
-  = | 'AUD'
-    | 'AZN'
-    | 'BARO'
-    | 'BAT'
-    | 'DP2'
-    | 'ENL'
-    | 'GND'
-    | 'IGC'
-    | 'OBST'
-    | 'RFB'
-    | 'SD'
-    | 'TIS'
-    | 'UI'
-    | 'USB'
-    | 'XPDR'
+export type FLACCapValue =
+  | 'AUD'
+  | 'AZN'
+  | 'BARO'
+  | 'BAT'
+  | 'DP2'
+  | 'ENL'
+  | 'GND'
+  | 'IGC'
+  | 'OBST'
+  | 'RFB'
+  | 'SD'
+  | 'TIS'
+  | 'UI'
+  | 'USB'
+  | 'XPDR';
 
 const CAP_TO_FEATURE: Record<FLACCapValue, keyof FLACFeatures> = {
   AUD: 'audio',
@@ -86,55 +86,42 @@ const CAP_TO_FEATURE: Record<FLACCapValue, keyof FLACFeatures> = {
   UI: 'userInterface',
   USB: 'usbSlot',
   XPDR: 'adsbModule',
-}
+};
 
 export interface FLACFeatures {
-  audio: boolean
-  alertZoneGenerator: boolean
-  pressureSensor: boolean
-  batteryCompartment: boolean
-  secondDataPort: boolean
-  engineNoiseLevelSensor: boolean
-  groundStationDevice: boolean
-  igcApprovedRecorder: boolean
-  obstacleDatabase: boolean
-  antennaDiversity: boolean
-  sdCard: boolean
-  garminTIS: boolean
-  userInterface: boolean
-  usbSlot: boolean
-  adsbModule: boolean
+  audio: boolean;
+  alertZoneGenerator: boolean;
+  pressureSensor: boolean;
+  batteryCompartment: boolean;
+  secondDataPort: boolean;
+  engineNoiseLevelSensor: boolean;
+  groundStationDevice: boolean;
+  igcApprovedRecorder: boolean;
+  obstacleDatabase: boolean;
+  antennaDiversity: boolean;
+  sdCard: boolean;
+  garminTIS: boolean;
+  userInterface: boolean;
+  usbSlot: boolean;
+  adsbModule: boolean;
 }
 
 export interface FLACPacket extends PacketStub<typeof sentenceId> {
-  features: FLACFeatures
+  features: FLACFeatures;
+  hwVersion: string;
+  swVersion: string;
+  flarmVersion: string;
+  deviceType: string;
+  deviceId: string;
+  build: string;
+  serial: string;
+  region: string;
+  radioId: string;
+  radioIdType: 'Unknown' | 'FLARM' | 'ADSB';
 }
 
-export type FLACRequestConfigItem
-  = | 'HWVER'
-    | 'DEVTYPE'
-    | 'DEVICEID'
-    | 'SWVER'
-    | 'SWEXP'
-    | 'FLARMVER'
-    | 'BUILD'
-    | 'SER'
-    | 'REGION'
-    | 'RADIOID'
-    | 'CAP'
-    | 'OBSTDB'
-    | 'OBSTEXP'
-    | 'LIC'
-    | 'LS'
-    | 'TASK'
-
-export interface FLACRequestPacket extends PacketStub<typeof sentenceId> {
-  queryType: 'R'
-  configItem: FLACRequestConfigItem
-}
-
-export function decodeSentence(stub: PacketStub, fields: string[]): FLACPacket {
-  const features: FLACFeatures = {
+const flarmDevice: FLACPacket = {
+  features: {
     audio: false,
     alertZoneGenerator: false,
     pressureSensor: false,
@@ -150,41 +137,131 @@ export function decodeSentence(stub: PacketStub, fields: string[]): FLACPacket {
     userInterface: false,
     usbSlot: false,
     adsbModule: false,
-  }
+  },
+  hwVersion: '',
+  swVersion: '',
+  flarmVersion: '',
+  deviceType: '',
+  deviceId: '',
+  build: '',
+  serial: '',
+  region: '',
+  radioId: '',
+  radioIdType: 'Unknown',
+  sentenceId,
+};
 
-  const decoded = {
-    ...initStubFields(stub, sentenceId, sentenceName),
-    features,
-  }
+export type FLACRequestConfigItem =
+  | 'HWVER'
+  | 'DEVTYPE'
+  | 'DEVICEID'
+  | 'SWVER'
+  | 'SWEXP'
+  | 'FLARMVER'
+  | 'BUILD'
+  | 'SER'
+  | 'REGION'
+  | 'RADIOID'
+  | 'CAP'
+  | 'OBSTDB'
+  | 'OBSTEXP'
+  | 'LIC'
+  | 'LS'
+  | 'TASK';
+
+export interface FLACRequestPacket extends PacketStub<typeof sentenceId> {
+  queryType: 'R';
+  configItem: FLACRequestConfigItem;
+}
+
+export function decodeSentence(_stub: PacketStub, fields: string[]): FLACPacket {
+  initStubFields(flarmDevice, sentenceId, sentenceName);
+  const decoded = flarmDevice;
 
   if (fields[1] !== 'A') {
-    return decoded
+    return decoded;
   }
 
   switch (fields[2]) {
     case 'CAP': {
-      const caps = fields[3]?.split(';') ?? []
+      const caps = fields[3]?.split(';') ?? [];
+      Object.keys(decoded.features).forEach((k) => (decoded.features[k as keyof FLACFeatures] = false));
       for (const cap of caps) {
-        const key = CAP_TO_FEATURE[cap as FLACCapValue]
+        const key = CAP_TO_FEATURE[cap as FLACCapValue];
         if (key) {
-          features[key] = true
+          decoded.features[key] = true;
         }
       }
-      break
+      break;
     }
+    case 'HWVER':
+      {
+        decoded.hwVersion = fields[3];
+      }
+      break;
+    case 'DEVTYPE':
+      {
+        decoded.deviceType = fields[3];
+      }
+      break;
+    case 'DEVICEID':
+      {
+        decoded.deviceId = fields[3];
+      }
+      break;
+    case 'SWVER':
+      {
+        decoded.swVersion = fields[3];
+      }
+      break;
+    case 'FLARMVER':
+      {
+        decoded.flarmVersion = fields[3];
+      }
+      break;
+    case 'BUILD':
+      {
+        decoded.build = fields[3];
+      }
+      break;
+    case 'SER':
+      {
+        decoded.serial = fields[3];
+      }
+      break;
+    case 'REGION':
+      {
+        decoded.region = fields[3];
+      }
+      break;
+    case 'RADIOID':
+      {
+        switch (fields[3]) {
+          case '1':
+            decoded.radioIdType = 'ADSB';
+            break;
+          case '2':
+            decoded.radioIdType = 'FLARM';
+            break;
+          default:
+            decoded.radioIdType = 'Unknown';
+            break;
+        }
+        decoded.radioId = fields[4];
+      }
+      break;
     default:
-      break
+      break;
   }
-
-  return decoded
+  return decoded;
 }
 
 export function encodePacket(packet: FLACRequestPacket, talker: string): string {
-  const result = [`$${talker}${sentenceId}`]
+  const result = [`$${talker}${sentenceId}`];
 
-  result.push(packet.queryType)
-  result.push(packet.configItem)
+  result.push(packet.queryType);
+  result.push(packet.configItem);
 
-  const resultWithoutChecksum = result.join(',')
-  return resultWithoutChecksum + createNmeaChecksumFooter(resultWithoutChecksum)
+  const resultWithoutChecksum = result.join(',');
+  return resultWithoutChecksum + createNmeaChecksumFooter(resultWithoutChecksum);
 }
