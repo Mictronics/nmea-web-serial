@@ -101,62 +101,88 @@ export interface Error {
   message?: string;
 }
 
-export interface FlarmData {
-  time: {
+type WithSource<T, S extends string> = T & { source: S | null };
+
+export type FlarmTime = WithSource<
+  {
     utc: Date;
     local: Date | null;
-    source: 'GGA' | 'RMC' | null;
-  } | null;
-  position: {
+  },
+  'GGA' | 'RMC'
+> | null;
+
+export type FlarmPosition = WithSource<
+  {
     latitude: number;
     longitude: number;
-    source: 'GGA' | 'RMC' | null;
     fixType?: 'none' | 'fix' | 'delta' | 'pps' | 'rtk' | 'frtk' | 'estimated' | 'manual' | 'simulation';
     status?: 'valid' | 'warning' | 'invalid';
     altitudeMeters?: number;
     satellitesInView?: number;
     horizontalDilution?: number;
-  } | null;
-  heading: {
+  },
+  'GGA' | 'RMC'
+> | null;
+
+export type FlarmHeading = WithSource<
+  {
     degreesTrue: number;
-    source: 'COG' | null;
     isDerived: boolean;
-  } | null;
-  speed: {
+  },
+  'COG'
+> | null;
+
+export type FlarmSpeed = WithSource<
+  {
     knots: number;
-    source: 'RMC' | null;
-  } | null;
-  dilution: {
+  },
+  'RMC'
+> | null;
+
+export type FlarmDilution = WithSource<
+  {
     selectionMode: 'manual' | 'automatic';
     fixMode: 'none' | 'unknown' | '2D' | '3D';
     satellites: number[];
     pdop: number;
     hdop: number;
     vdop: number;
-    source: 'GSA' | null;
-  } | null;
-  status: {
+  },
+  'GSA'
+> | null;
+
+export type FlarmStatus = WithSource<
+  {
     gps: GpsStatus;
     power: PowerStatus;
     rxDevices: number;
     txDevices: number;
-    source: 'FLAU' | null;
-  } | null;
-  alarm: {
+  },
+  'FLAU'
+> | null;
+
+export type FlarmAlarm = WithSource<
+  {
     level: AlarmLevel;
     type: AlarmType | number;
     relativeBearing: number;
     relativeVertical: number;
     relativeDistance: number;
-    source: 'FLAU' | null;
-  } | null;
-  altitude: {
+  },
+  'FLAU'
+> | null;
+
+export type FlarmAltitude = WithSource<
+  {
     altitude: number;
     unit: string;
     fixMode: GRMZFixType;
-    source: 'GRMZ' | null;
-  } | null;
-  device: {
+  },
+  'GRMZ'
+> | null;
+
+export type FlarmDevice = WithSource<
+  {
     features: FLACFeatures;
     hwVersion: string;
     swVersion: string;
@@ -169,12 +195,28 @@ export interface FlarmData {
     region: string;
     radioId: string;
     radioIdType: 'Unknown' | 'FLARM' | 'ADSB';
-    source: 'FLAC' | null;
-  } | null;
-  errors: {
+  },
+  'FLAC'
+> | null;
+
+export type FlarmErrors = WithSource<
+  {
     errors: Error[];
-    source: 'FLAE' | null;
-  } | null;
+  },
+  'FLAE'
+> | null;
+
+export interface FlarmData {
+  time: FlarmTime;
+  position: FlarmPosition;
+  heading: FlarmHeading;
+  speed: FlarmSpeed;
+  dilution: FlarmDilution;
+  status: FlarmStatus;
+  alarm: FlarmAlarm;
+  altitude: FlarmAltitude;
+  device: FlarmDevice;
+  errors: FlarmErrors;
 }
 
 export interface StoredPackets extends Record<string, PacketStub | undefined> {
