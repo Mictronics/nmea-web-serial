@@ -9,3 +9,4 @@ export type { FLACPacket } from './FLAC';
 export type { FLAUPacket } from './FLAU';
 export type { GRMZPacket } from './GRMZ';
 export type { FLAEPacket } from './FLAE';
+export type { FLAVPacket } from './FLAV';

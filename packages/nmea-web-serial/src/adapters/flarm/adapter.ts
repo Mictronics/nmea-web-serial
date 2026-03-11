@@ -11,9 +11,9 @@ export const FLARM_SENTENCE_IDS = [
   'FLAU',
   'FLAC',
   'FLAE',
+  'FLAV',
   /*
         'LAA',
-        'LAV',
         'LAR',
         'LAS',
         'LAQ',

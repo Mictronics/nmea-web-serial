@@ -124,6 +124,7 @@ function computeDevice(dev?: FLACPacket): FlarmData['device'] {
       serial: dev.serial,
       build: dev.build,
       flarmVersion: dev.flarmVersion,
+      obstacleVersion: '',
       deviceId: dev.deviceId,
       deviceType: dev.deviceType,
       region: dev.region,
@@ -156,6 +157,12 @@ export function computeFlarmData(packets: StoredPackets): FlarmData {
   const altitude = computeAltitude(packets.GRMZ);
   const device = computeDevice(packets.FLAC);
   const errors = computeErrors(packets.FLAE);
+  const ver = packets.FLAV;
+  if (ver && device) {
+    device.hwVersion = ver.hwVersion;
+    device.swVersion = ver.swVersion;
+    device.obstacleVersion = ver.obstacleVersion;
+  }
 
   return { time, position, speed, heading, status, alarm, dilution, altitude, device, errors };
 }

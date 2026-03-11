@@ -4,6 +4,7 @@ import type { FLACPacket, FLAUPacket, GRMZPacket } from '../../parser/codecs';
 import type { GRMZFixType } from '../../parser/codecs/GRMZ';
 import type { FLACFeatures } from '../../parser/codecs/FLAC';
 import type { FLAEPacket } from '../../parser/codecs/FLAE';
+import type { FLAVPacket } from '../../parser/codecs/FLAV';
 
 export enum AlarmLevel {
   None = 0,
@@ -160,6 +161,7 @@ export interface FlarmData {
     hwVersion: string;
     swVersion: string;
     flarmVersion: string;
+    obstacleVersion: string;
     deviceType: string;
     deviceId: string;
     build: string;
@@ -190,4 +192,6 @@ export interface StoredPackets extends Record<string, PacketStub | undefined> {
   FLAC?: FLACPacket;
   // PFLAE – Self-test result and errors codes
   FLAE?: FLAEPacket;
+  // PFLAV – Version information
+  FLAV?: FLAVPacket;
 }
