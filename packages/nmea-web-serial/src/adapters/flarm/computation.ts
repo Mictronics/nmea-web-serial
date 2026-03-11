@@ -15,16 +15,8 @@ import type {
   StoredPackets,
 } from './types';
 
-function hasValidGGA(gga?: GGAPacket): gga is GGAPacket {
-  return !!gga && gga.fixType !== 'none';
-}
-
-function hasValidRMC(rmc?: RMCPacket): rmc is RMCPacket {
-  return !!rmc && rmc.status === 'valid';
-}
-
 function computePosition(gga?: GGAPacket, rmc?: RMCPacket): FlarmPosition | null {
-  if (hasValidGGA(gga)) {
+  if (gga && gga.fixType !== 'none') {
     return {
       latitude: gga.latitude,
       longitude: gga.longitude,
@@ -36,7 +28,7 @@ function computePosition(gga?: GGAPacket, rmc?: RMCPacket): FlarmPosition | null
     };
   }
 
-  if (hasValidRMC(rmc)) {
+  if (rmc && rmc.status === 'valid') {
     return {
       latitude: rmc.latitude,
       longitude: rmc.longitude,
@@ -48,7 +40,7 @@ function computePosition(gga?: GGAPacket, rmc?: RMCPacket): FlarmPosition | null
 }
 
 function computeTime(gga?: GGAPacket, rmc?: RMCPacket): FlarmTime | null {
-  if (hasValidGGA(gga)) {
+  if (gga && gga.fixType !== 'none') {
     return {
       utc: gga.time,
       local: null,
@@ -56,7 +48,7 @@ function computeTime(gga?: GGAPacket, rmc?: RMCPacket): FlarmTime | null {
     };
   }
 
-  if (hasValidRMC(rmc)) {
+  if (rmc && rmc.status === 'valid') {
     return {
       utc: rmc.datetime,
       local: null,
@@ -67,14 +59,14 @@ function computeTime(gga?: GGAPacket, rmc?: RMCPacket): FlarmTime | null {
 }
 
 function computeSpeed(rmc?: RMCPacket): FlarmSpeed | null {
-  if (hasValidRMC(rmc)) {
+  if (rmc && rmc.status === 'valid') {
     return { knots: rmc.speedKnots, source: 'RMC' };
   }
   return null;
 }
 
 function computeHeading(rmc?: RMCPacket): FlarmHeading | null {
-  if (!hasValidRMC(rmc)) return null;
+  if (!rmc || rmc.status !== 'valid') return null;
 
   const cog = rmc.trackTrue;
   if (cog === undefined) return null;
