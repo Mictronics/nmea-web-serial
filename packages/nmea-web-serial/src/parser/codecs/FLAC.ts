@@ -182,6 +182,7 @@ export function decodeSentence(_stub: PacketStub, fields: string[]): FLACPacket 
     return decoded;
   }
 
+  const field3 = fields[3] ?? '';
   switch (fields[2]) {
     case 'CAP': {
       const caps = fields[3]?.split(';') ?? [];
@@ -196,47 +197,47 @@ export function decodeSentence(_stub: PacketStub, fields: string[]): FLACPacket 
     }
     case 'HWVER':
       {
-        decoded.hwVersion = fields[3];
+        decoded.hwVersion = field3;
       }
       break;
     case 'DEVTYPE':
       {
-        decoded.deviceType = fields[3];
+        decoded.deviceType = field3;
       }
       break;
     case 'DEVICEID':
       {
-        decoded.deviceId = fields[3];
+        decoded.deviceId = field3;
       }
       break;
     case 'SWVER':
       {
-        decoded.swVersion = fields[3];
+        decoded.swVersion = field3;
       }
       break;
     case 'FLARMVER':
       {
-        decoded.flarmVersion = fields[3];
+        decoded.flarmVersion = field3;
       }
       break;
     case 'BUILD':
       {
-        decoded.build = fields[3];
+        decoded.build = field3;
       }
       break;
     case 'SER':
       {
-        decoded.serial = fields[3];
+        decoded.serial = field3;
       }
       break;
     case 'REGION':
       {
-        decoded.region = fields[3];
+        decoded.region = field3;
       }
       break;
     case 'RADIOID':
       {
-        switch (fields[3]) {
+        switch (field3) {
           case '1':
             decoded.radioIdType = 'ADSB';
             break;
@@ -247,7 +248,7 @@ export function decodeSentence(_stub: PacketStub, fields: string[]): FLACPacket 
             decoded.radioIdType = 'Unknown';
             break;
         }
-        decoded.radioId = fields[4];
+        decoded.radioId = fields[4] ?? '';
       }
       break;
     default:
