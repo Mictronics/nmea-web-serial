@@ -1,7 +1,7 @@
-import type { NmeaMachineConfig } from '../../core'
-import type { FlarmData, StoredPackets } from './types'
-import { createNmeaMachine } from '../../core'
-import { computeFlarmData } from './computation'
+import type { NmeaMachineConfig } from '../../core';
+import type { FlarmData, StoredPackets } from './types';
+import { createNmeaMachine } from '../../core';
+import { computeFlarmData } from './computation';
 
 export const FLARM_SENTENCE_IDS = [
   'RMC',
@@ -10,9 +10,9 @@ export const FLARM_SENTENCE_IDS = [
   'GRMZ',
   'FLAU',
   'FLAC',
+  'FLAE',
   /*
         'LAA',
-        'LAE',
         'LAV',
         'LAR',
         'LAS',
@@ -26,12 +26,12 @@ export const FLARM_SENTENCE_IDS = [
         'LAM',
         'LAL',
     */
-] as const
+] as const;
 
 export function createFlarmAdapter() {
   return (packets: StoredPackets): FlarmData => {
-    return computeFlarmData(packets)
-  }
+    return computeFlarmData(packets);
+  };
 }
 
 export const initialFlarmData: FlarmData = {
@@ -44,9 +44,10 @@ export const initialFlarmData: FlarmData = {
   dilution: null,
   altitude: null,
   device: null,
-}
+  errors: null,
+};
 
-export const initialFlarmPackets: StoredPackets = {}
+export const initialFlarmPackets: StoredPackets = {};
 
 export function createFlarmNmeaConfig(): NmeaMachineConfig<FlarmData, StoredPackets> {
   return {
@@ -54,9 +55,9 @@ export function createFlarmNmeaConfig(): NmeaMachineConfig<FlarmData, StoredPack
     allowedSentenceIds: FLARM_SENTENCE_IDS,
     initialData: initialFlarmData,
     initialPackets: initialFlarmPackets,
-  }
+  };
 }
 
 export function createFlarmNmeaMachine() {
-  return createNmeaMachine(createFlarmNmeaConfig())
+  return createNmeaMachine(createFlarmNmeaConfig());
 }

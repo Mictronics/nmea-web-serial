@@ -2,7 +2,8 @@ import type { GGAPacket, GSAPacket, RMCPacket } from 'nmea-simple';
 import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
 import type { FLACPacket, FLAUPacket, GRMZPacket } from '../../parser/codecs';
 import type { GRMZFixType } from '../../parser/codecs/GRMZ';
-import { FLACFeatures } from '../../parser/codecs/FLAC';
+import type { FLACFeatures } from '../../parser/codecs/FLAC';
+import type { FLAEPacket } from '../../parser/codecs/FLAE';
 
 export enum AlarmLevel {
   None = 0,
@@ -27,6 +28,76 @@ export enum GpsStatus {
 export enum PowerStatus {
   Good = 0,
   Fail = 1,
+}
+
+export enum Severity {
+  None = 0,
+  Info = 1,
+  ReducedFunctionality = 2,
+  Fatal = 3,
+}
+
+export enum ErrorCode {
+  FirmwareExpired = 0x11,
+  FirmwareUpdateError = 0x12,
+
+  Power = 0x21,
+  UIError = 0x22,
+  AudioError = 0x23,
+  ADCError = 0x24,
+  SDCardError = 0x25,
+  USBError = 0x26,
+  LEDError = 0x27,
+  EEPROMError = 0x28,
+  GeneralHardwareError = 0x29,
+  TransponderReceiverUnserviceable = 0x2a,
+  EEPROMError2 = 0x2b,
+  GPIOError = 0x2c,
+
+  GPSCommunication = 0x31,
+  GPSModuleConfiguration = 0x32,
+  GPSAntenna = 0x33,
+
+  RFCommunication = 0x41,
+  DuplicateRadioID = 0x42,
+  WrongICAOAddress = 0x43,
+
+  Communication = 0x51,
+
+  FlashMemory = 0x61,
+
+  PressureSensor = 0x71,
+
+  ObstacleDatabase = 0x81,
+  ObstacleDatabaseExpired = 0x82,
+
+  FlightRecorder = 0x91,
+  EngineNoiseRecording = 0x93,
+  RangeAnalyzer = 0x94,
+
+  ConfigurationError = 0xa1,
+
+  InvalidObstacleLicense = 0xb1,
+  InvalidIGCLicense = 0xb2,
+  InvalidAUDLicense = 0xb3,
+  InvalidENLLicense = 0xb4,
+  InvalidRFBLicense = 0xb5,
+  InvalidTISLicense = 0xb6,
+
+  GenericError = 0x100,
+  FlashFileSystem = 0x101,
+
+  ExternalDisplayFirmwareUpdate = 0x110,
+
+  OutsideDesignatedRegion = 0x120,
+
+  Other = 0xf1,
+}
+
+export interface Error {
+  severity: Severity;
+  code: ErrorCode | number;
+  message?: string;
 }
 
 export interface FlarmData {
@@ -98,6 +169,10 @@ export interface FlarmData {
     radioIdType: 'Unknown' | 'FLARM' | 'ADSB';
     source: 'FLAC' | null;
   } | null;
+  errors: {
+    errors: Error[];
+    source: 'FLAE' | null;
+  } | null;
 }
 
 export interface StoredPackets extends Record<string, PacketStub | undefined> {
@@ -113,4 +188,6 @@ export interface StoredPackets extends Record<string, PacketStub | undefined> {
   GRMZ?: GRMZPacket;
   // PFLAC – Device features
   FLAC?: FLACPacket;
+  // PFLAE – Self-test result and errors codes
+  FLAE?: FLAEPacket;
 }
