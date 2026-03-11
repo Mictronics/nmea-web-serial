@@ -86,9 +86,11 @@ function parseErrorCode(value?: string): number {
   return Number.parseInt(value, 16);
 }
 
+const errors: Error[] = [];
+
 export function decodeSentence(_stub: PacketStub, fields: string[]): FLAEPacket {
   const decoded: FLAEPacket = {
-    errors: [],
+    errors,
     sentenceId,
   };
   initStubFields(decoded, sentenceId, sentenceName);
@@ -101,10 +103,12 @@ export function decodeSentence(_stub: PacketStub, fields: string[]): FLAEPacket 
   const code = parseErrorCode(fields[3]);
 
   if (severity === Severity.None && code === 0) {
+    // Clear old errors if there are none reported.
+    errors.length = 0;
     return decoded;
   }
 
-  decoded.errors.push({
+  errors.push({
     severity,
     code,
     message: fields[4] || undefined,
