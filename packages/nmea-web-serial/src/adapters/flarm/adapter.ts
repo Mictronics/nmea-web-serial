@@ -12,20 +12,7 @@ export const FLARM_SENTENCE_IDS = [
   'FLAC',
   'FLAE',
   'FLAV',
-  /*
-        'LAA',
-        'LAR',
-        'LAS',
-        'LAQ',
-        'LAO',
-        'ALP',
-        'LAI',
-        'LAJ',
-        'LAN',
-        'LAF',
-        'LAM',
-        'LAL',
-    */
+  'FLAA',
 ] as const;
 
 export function createFlarmAdapter() {
@@ -45,6 +32,7 @@ export const initialFlarmData: FlarmData = {
   altitude: null,
   device: null,
   errors: null,
+  aircrafts: null,
 };
 
 export const initialFlarmPackets: StoredPackets = {};

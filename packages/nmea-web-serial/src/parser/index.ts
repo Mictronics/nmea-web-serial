@@ -10,6 +10,7 @@ import type { DBSPacket } from './codecs/DBS';
 import type { DPTPacket } from './codecs/DPT';
 import type { FLACPacket, FLACRequestPacket } from './codecs/FLAC';
 import type { FLAUPacket } from './codecs/FLAU';
+import type { FLAAPacket } from './codecs/FLAA';
 import type { GRMZPacket } from './codecs/GRMZ';
 import type { FLAEPacket } from './codecs';
 import { DefaultPacketFactory, parseGenericPacket } from 'nmea-simple';
@@ -21,12 +22,14 @@ import { decodeSentence as decodeFLAC, encodePacket as encodeFLAC } from './code
 import { decodeSentence as decodeFLAU } from './codecs/FLAU';
 import { decodeSentence as decodeGRMZ } from './codecs/GRMZ';
 import { decodeSentence as decodeFLAE } from './codecs/FLAE';
+import { decodeSentence as decodeFLAA } from './codecs/FLAA';
 
 type CustomPackets =
   | DBSPacket
   | DBKPacket
   | DPTPacket
   | FLAUPacket
+  | FLAAPacket
   | GRMZPacket
   | FLACPacket
   | FLACRequestPacket
@@ -51,6 +54,8 @@ function assembleExtendedNmeaPacket(stub: PacketStub, fields: string[]): CustomP
       switch (stub.sentenceId) {
         case 'FLAU':
           return decodeFLAU(stub, fields);
+        case 'FLAA':
+          return decodeFLAA(stub, fields);
         case 'GRMZ':
           return decodeGRMZ(stub, fields);
         case 'FLAC':

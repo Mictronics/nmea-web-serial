@@ -1,5 +1,5 @@
 import type { GGAPacket, GSAPacket, RMCPacket } from 'nmea-simple';
-import type { FLACPacket, FLAUPacket, GRMZPacket, FLAEPacket, FLAVPacket } from '../../parser/codecs';
+import type { FLACPacket, FLAUPacket, GRMZPacket, FLAEPacket, FLAVPacket, FLAAPacket } from '../../parser/codecs';
 import type {
   FlarmData,
   FlarmDevice,
@@ -13,6 +13,8 @@ import type {
   FlarmSpeed,
   FlarmStatus,
   StoredPackets,
+  FlarmAircraft,
+  FlarmAircrafts,
 } from './types';
 
 function computePosition(gga?: GGAPacket, rmc?: RMCPacket): FlarmPosition | null {
@@ -169,6 +171,51 @@ function computeErrors(err?: FLAEPacket): FlarmErrors | null {
   return null;
 }
 
+const AIRCRAFT_TIMEOUT_MS = 15000;
+
+type AircraftEntry = {
+  aircraft: any;
+  lastSeen: number;
+};
+
+const aircraftStore = new Map<string, AircraftEntry>();
+
+function updateAircraftCollection(flaa?: FLAAPacket): FlarmAircrafts {
+  const now = Date.now();
+  if (flaa) {
+    const id = `${flaa.idType}:${flaa.id}`;
+    if (id) {
+      aircraftStore.set(id, {
+        aircraft: {
+          id,
+          alarmLevel: flaa.alarmLevel,
+          relativeNorth: flaa.relativeNorth,
+          relativeEast: flaa.relativeEast,
+          relativeVertical: flaa.relativeVertical,
+          idType: flaa.idType,
+          track: flaa.track,
+          turnRate: flaa.turnRate,
+          groundSpeed: flaa.groundSpeed,
+          climbRate: flaa.climbRate,
+          aircraftType: flaa.aircraftType,
+          noTrack: flaa.noTrack,
+        } as FlarmAircraft,
+        lastSeen: now,
+      });
+    }
+  }
+
+  for (const [id, entry] of aircraftStore) {
+    if (now - entry.lastSeen > AIRCRAFT_TIMEOUT_MS) {
+      aircraftStore.delete(id);
+    }
+  }
+  return {
+    aircrafts: Array.from(aircraftStore.values()).map((v) => v.aircraft),
+    source: 'FLAA',
+  };
+}
+
 export function computeFlarmData(packets: StoredPackets): FlarmData {
   return {
     time: computeTime(packets.GGA, packets.RMC),
@@ -181,5 +228,6 @@ export function computeFlarmData(packets: StoredPackets): FlarmData {
     altitude: computeAltitude(packets.GRMZ),
     device: computeDevice(packets.FLAC, packets.FLAV),
     errors: computeErrors(packets.FLAE),
+    aircrafts: updateAircraftCollection(packets.FLAA),
   };
 }

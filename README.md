@@ -241,6 +241,7 @@ The FLARM adapter automatically computes FLARM data from NMEA sentences:
 
 - **Device**: FLAC
 - **Status**: FLAU
+- **Aircrafts**: FLAA
 - **Altitude**: GRMZ
 - **Errors**: FLAE
 - **Version**: FLAV
@@ -301,6 +302,7 @@ The FLARM adapter uses the following sentence types to compute FLARM data:
 
 - `FLAC` - Device configuration (on request via FLAC query)
 - `FLAU` - Heartbeat, status, and basic alarms
+- `FLAA` - Proximate aircraft data (multiple targets)
 - `FLAE` - Self-test result and errors codes
 - `FLAV` - Version information
 - `GRMZ` - Garmin's barometric altitude

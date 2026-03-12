@@ -1,6 +1,6 @@
 import type { GGAPacket, GSAPacket, RMCPacket } from 'nmea-simple';
 import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
-import type { FLACPacket, FLAUPacket, GRMZPacket } from '../../parser/codecs';
+import type { FLACPacket, FLAUPacket, GRMZPacket, FLAAPacket } from '../../parser/codecs';
 import type { GRMZFixType } from '../../parser/codecs/GRMZ';
 import type { FLACFeatures } from '../../parser/codecs/FLAC';
 import type { FLAEPacket } from '../../parser/codecs/FLAE';
@@ -206,6 +206,29 @@ export type FlarmErrors = WithSource<
   'FLAE'
 > | null;
 
+export type FlarmAircraft = {
+  alarmLevel: number;
+  relativeNorth: number;
+  relativeEast?: number;
+  relativeVertical: number;
+  idType?: number;
+  id?: string;
+  track?: number;
+  turnRate?: number;
+  groundSpeed?: number;
+  climbRate?: number;
+  aircraftType: number;
+  noTrack?: boolean;
+  rssi?: number;
+};
+
+export type FlarmAircrafts = WithSource<
+  {
+    aircrafts: FlarmAircraft[];
+  },
+  'FLAA'
+> | null;
+
 export interface FlarmData {
   time: FlarmTime;
   position: FlarmPosition;
@@ -217,6 +240,7 @@ export interface FlarmData {
   altitude: FlarmAltitude;
   device: FlarmDevice;
   errors: FlarmErrors;
+  aircrafts: FlarmAircrafts;
 }
 
 export interface StoredPackets extends Record<string, PacketStub | undefined> {
@@ -232,6 +256,8 @@ export interface StoredPackets extends Record<string, PacketStub | undefined> {
   GRMZ?: GRMZPacket;
   // PFLAC – Device features
   FLAC?: FLACPacket;
+  // PFLAA – Data on other proximate aircraft
+  FLAA?: FLAAPacket;
   // PFLAE – Self-test result and errors codes
   FLAE?: FLAEPacket;
   // PFLAV – Version information
