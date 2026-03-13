@@ -127,6 +127,7 @@
 import type { PacketStub } from 'nmea-simple/dist/codecs/PacketStub';
 import { initStubFields } from 'nmea-simple/dist/codecs/PacketStub';
 import { parseIntSafe, parseFloatSafe } from '../../utils';
+import { AircraftType, FlarmSource } from '../../adapters/flarm/types';
 
 export const sentenceId = 'FLAA' as const;
 export const sentenceName = 'Data on other proximate aircraft' as const;
@@ -142,9 +143,9 @@ export interface FLAAPacket extends PacketStub<typeof sentenceId> {
   turnRate?: number;
   groundSpeed?: number;
   climbRate?: number;
-  aircraftType: number;
+  aircraftType: AircraftType;
   noTrack?: boolean;
-  source?: number;
+  source?: FlarmSource;
   rssi?: number;
 }
 

@@ -95,6 +95,33 @@ export enum ErrorCode {
   Other = 0xf1,
 }
 
+export enum AircraftType {
+  Reserved0 = 0,
+  Glider = 1,
+  TowPlane = 2,
+  Rotorcraft = 3,
+  Skydiver = 4,
+  DropPlane = 5,
+  HangGlider = 6,
+  Paraglider = 7,
+  PropellerAircraft = 8,
+  JetAircraft = 9,
+  Unknown = 10,
+  Balloon = 11,
+  Airship = 12,
+  UAV = 13,
+  Reserved14 = 14,
+  StaticObstacle = 15,
+}
+
+export enum FlarmSource {
+  FLARM = 0,
+  ADSB = 1,
+  ADSR = 3,
+  TISB = 4,
+  MODES = 6,
+}
+
 export interface Error {
   severity: Severity;
   code: ErrorCode | number;
@@ -217,9 +244,10 @@ export type FlarmAircraft = {
   turnRate?: number;
   groundSpeed?: number;
   climbRate?: number;
-  aircraftType: number;
+  aircraftType: AircraftType;
   noTrack?: boolean;
   rssi?: number;
+  source?: FlarmSource;
 };
 
 export type FlarmAircrafts = WithSource<
