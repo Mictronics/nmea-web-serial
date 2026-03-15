@@ -185,6 +185,10 @@ function updateAircraftCollection(flaa?: FLAAPacket): FlarmAircrafts {
   if (flaa) {
     const id = `${flaa.idType}:${flaa.id}`;
     if (id) {
+      const distance =
+        flaa.relativeEast != null && flaa.relativeNorth != null
+          ? Math.sqrt(flaa.relativeEast ** 2 + flaa.relativeNorth ** 2)
+          : undefined;
       aircraftStore.set(id, {
         aircraft: {
           id,
@@ -199,6 +203,7 @@ function updateAircraftCollection(flaa?: FLAAPacket): FlarmAircrafts {
           climbRate: flaa.climbRate,
           aircraftType: flaa.aircraftType,
           noTrack: flaa.noTrack,
+          distance,
         } as FlarmAircraft,
         lastSeen: now,
       });

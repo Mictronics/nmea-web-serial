@@ -248,6 +248,7 @@ export type FlarmAircraft = {
   noTrack?: boolean;
   rssi?: number;
   source?: FlarmSource;
+  distance?: number;
 };
 
 export type FlarmAircrafts = WithSource<
